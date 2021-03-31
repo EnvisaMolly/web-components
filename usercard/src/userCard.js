@@ -42,29 +42,44 @@ class UserCard extends HTMLElement {
   constructor() {
     super();
 
+    // Visa kontaktinfo
     this.showInfo = true;
 
+    // Skapa shadowDOM append template ovanför
     this.attachShadow({ mode: 'open' });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
+    // Hämtar h3 i template och lägger till texten som är i HTML filen i name (name="exempel")
     this.shadowRoot.querySelector('h3').innerText = this.getAttribute('name');
+    // Hämtar img i template och lägger till bilden som är i HTML filen i name (avatar="exempel")
     this.shadowRoot.querySelector('img').src = this.getAttribute('avatar');
   }
 
+  // När man klickar på hide info
   toggleInfo() {
+
+    // gör showInfo till false
     this.showInfo = !this.showInfo;
 
+    // Hämta info klassen
     const info = this.shadowRoot.querySelector('.info');
+    // Hämta toggle-info id
     const toggleBtn = this.shadowRoot.querySelector('#toggle-info');
 
+    // Om showInfo är true
     if(this.showInfo) {
+      // Visa info
       info.style.display = 'block';
+      // Byt texten inuti knappen till Hide Info
       toggleBtn.innerText = 'Hide Info';
     } else {
+      // Visa ej info
       info.style.display = 'none';
+      // Byt texten inuti knappen till Show Info
       toggleBtn.innerText = 'Show Info';
     }
   }
 
+  // Hämtar id toggle-info lägger till ett click event
   connectedCallback() {
     this.shadowRoot.querySelector('#toggle-info').addEventListener('click', () => this.toggleInfo());
   }
@@ -74,4 +89,5 @@ class UserCard extends HTMLElement {
   }
 }
 
+// Kopplar user-card custom elementet med UserCard klassen
 window.customElements.define('user-card', UserCard);
