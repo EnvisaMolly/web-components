@@ -3,7 +3,7 @@ template.innerHTML = `
   <style>
 
     .square-example {
-      height:650px;
+      height:300px;
       width:500px;
       border:1px solid black;
       overflow: hidden;
@@ -21,21 +21,34 @@ template.innerHTML = `
     }
 
     #startBox{
+      height: 300px;
       text-align:center;
+      display: block;
+      margin: auto;
     }
 
-    #startGame {
+    #easyGame, #mediumGame, #hardGame, #restart {
       background-color:pink;
-      margin-top:20px;
+      margin: auto;
+      margin-top: 35px;
       border-radius:5px;
       height:50px;
-      width:100px;
+      width:200px;
+      display:block;
+      text-align:center;
+      font-size: 120%;
+    }
+
+    #restart {
+      display: none;
+      margin-top: 120px;
     }
 
     .scoreBox{
       display:inline-block;
       width: 500px;
       text-align:center;
+      display: none;
     }
 
     #noOfMatches {
@@ -63,7 +76,8 @@ template.innerHTML = `
       height: 100px;
       border-radius: 5px;
       cursor: pointer;
-      border: 1px solid black;
+      // border: 1px solid black;
+      box-shadow: 2px 2px #88888825;
       margin: 5px;
       box-sizing: border-box;
       background:url(./images/SlackLogo.png);
@@ -139,24 +153,26 @@ template.innerHTML = `
     .card-back {
       background-image: url("Images/SlackLogo.png");
     }
-
   </style>
+
   <div class="square-example">
     <div id="exit"></div>
+
     <div id="startBox">
-      <button id="startGame">Start Game</button>
+      <button id="easyGame">Easy</button>
+      <button id="mediumGame">Medium</button>
+      <button id="hardGame">Hard</button>
     </div>
 
     <div class="scoreBox">
-      <h4 id="noOfMatches">Matches found: <span id="matchesFound">0 / 8</span></h4>
+      <h4 id="noOfMatches">Matches found: <span id="matchesFound"></span></h4>
       <h4 id="noOfTries">Total tries: <span id="totalTries">0</span></h4>
     </div>
 
     <div class="box">
-      <div class="container">
-
-      </div>
     </div>
+
+    <button id="restart">Play Again</button>
   </div>
 `;
 
@@ -168,7 +184,7 @@ class Square extends HTMLElement {
     this.preventClick = false;
     this.combosFound = 0;
     this.triesDone = 0;
-    this.numberOfCards = 8;
+    this.numberOfCards = 0;
 
     // Skapa shadowDOM append template ovanför
     this.attachShadow({ mode: 'open' });
@@ -182,21 +198,67 @@ class Square extends HTMLElement {
     currentSquare.parentNode.removeChild(currentSquare)
   }
 
-  startGame() {
-    // Hämta square klassen
+  startGame(rows) {
+
+    // Hämta container, square-example, scoreBox, startBox
+    const box = this.shadowRoot.querySelector('.box');
+    const square = this.shadowRoot.querySelector('.square-example');
+    const scoreBox = this.shadowRoot.querySelector('.scoreBox');
+    const startBox = this.shadowRoot.querySelector('#startBox');
+
+    // Visa scoreBox när spelet startar
+    scoreBox.style.display = "inline-block"
+
+    // Visa ej startBox när spelet startar
+    startBox.style.display = "none"
+
+
+    // Skapa container
+    const cont = '<div class="container"></div>'
+    box.innerHTML = cont;
+
+    // Hämta container
     const container = this.shadowRoot.querySelector('.container');
 
-    let grid = ''
-    let numberOfRows = this.numberOfCards / 2;
-
-    for (let i = 0; i < numberOfRows; i++) {
-      grid += '<div class="row"> <div class="card"> </div> <div class="card"> </div> <div class="card"> </div> <div class="card"> </div> </div>'
+    // Ändra storleken på rutan beroende på svårhetsgraden på spelet
+    if (rows === 2) {
+      square.style.height = "360px"
+    } else if (rows === 3) {
+      square.style.height = "470px"
+    } else if (rows === 4) {
+      square.style.height = "580px"
     }
 
+    // Ändra antal kort
+    this.numberOfCards = rows * 2;
+
+    // Skriv ut antal matchningar som är gjorda
+    this.shadowRoot.getElementById('matchesFound').innerHTML = `${this.combosFound} / ${this.numberOfCards}`
+
+    // Skriv ut antal matchningar som är gjorda
+    this.shadowRoot.getElementById('totalTries').innerHTML = `0`
+
+    // Skapa spelfält
+    let grid = ''
+
+    // Skapa memory korten
+    for (let i = 0; i < rows; i++) {
+      grid += '<div class="row"> <div class="card"> </div> <div class="card"> </div> <div class="card"> </div> <div class="card"> </div> </div>'
+    }
+    // Lägg till på spelplanen
     container.innerHTML = grid;
 
-    const colors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'grey', 'black']
+    // Alla möjliga kort som finns
+    const allColors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'grey', 'black']
 
+    // De kort som ska användas
+    const colors = []
+
+    for (let i = 0; i < this.numberOfCards; i++) {
+      colors.push(allColors[i])
+    }
+
+    // Lägg till attribut på korten
     const cardColor = [...this.shadowRoot.querySelectorAll('.card')]
     for (const color of colors) {
       const cardAIndex = parseInt(Math.random() * cardColor.length)
@@ -253,18 +315,42 @@ class Square extends HTMLElement {
         this.shadowRoot.getElementById('matchesFound').innerHTML = `${this.combosFound} / ${this.numberOfCards}`
         this.shadowRoot.getElementById('totalTries').innerHTML = `${this.triesDone}`
 
+        // Om man hittat alla möjliga kombinationer
         if (this.combosFound === this.numberOfCards) {
           alert('Congrats you found them all')
+          // Hämta restart knapp, container
+          let restart = this.shadowRoot.getElementById('restart');
+          const container = this.shadowRoot.querySelector('.container');
+          const square = this.shadowRoot.querySelector('.square-example');
+          const scoreBox = this.shadowRoot.querySelector('.scoreBox');
+
+          // Ta bort memoryspel
+          container.parentNode.removeChild(container)
+
+          // Visa restart knapp, visa ej score fält, ändra storlek på rutan
+          restart.style.display = "inline-block"
+          scoreBox.style.display = "none"
+          square.style.height = ""
         }
       }
     }
   }
 
+  playAgain(){
+    this.combosFound = 0;
+    this.triesDone = 0;
+    const startBox = this.shadowRoot.querySelector('#startBox');
+    startBox.style.display = "block"
+  }
+
   // Hämtar id exit lägger till ett click event
   connectedCallback() {
     this.shadowRoot.querySelector('#exit').addEventListener('click', () => this.exitWindow());
-    this.shadowRoot.querySelector('#startGame').addEventListener('click', () => this.startGame());
-   }
+    this.shadowRoot.querySelector('#easyGame').addEventListener('click', () => this.startGame(2));
+    this.shadowRoot.querySelector('#mediumGame').addEventListener('click', () => this.startGame(3));
+    this.shadowRoot.querySelector('#hardGame').addEventListener('click', () => this.startGame(4));
+    this.shadowRoot.querySelector('#restart').addEventListener('click', () => this.playAgain());
+  }
 }
 
 // Kopplar spuare-example custom elementet med Spuare klassen
