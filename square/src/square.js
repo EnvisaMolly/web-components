@@ -3,12 +3,13 @@ template.innerHTML = `
   <style>
 
     .square-example {
-      height:600px;
+      height:650px;
       width:500px;
       border:1px solid black;
       overflow: hidden;
       border-radius:5px;
       box-shadow: 5px 5px #88888825;
+      text-align: center;
     }
 
     #exit {
@@ -31,8 +32,24 @@ template.innerHTML = `
       width:100px;
     }
 
+    .scoreBox{
+      display:inline-block;
+      width: 500px;
+      text-align:center;
+    }
+
+    #noOfMatches {
+      width: 200px;
+      float: left;
+      margin-left: 30px;
+    }
+    #noOfTries {
+      width: 200px;
+      float: right;
+    }
+
     .container {
-      margin-top: 50px;
+      margin-top: 20px;
       display: block;
     }
 
@@ -57,66 +74,66 @@ template.innerHTML = `
     }
 
     .red {
-      background-image: url("Images/red1.png"); 
+      background-image: url("Images/red.png"); 
     }
 
     .red.done:hover {
-      background-image: url("Images/red1.png"); 
+      background-image: url("Images/red.png"); 
     }
     
     .green {
-      background-image: url("Images/green1.png"); 
+      background-image: url("Images/green.png"); 
     }
     
     .green.done:hover {
-      background-image: url("Images/green1.png"); 
+      background-image: url("Images/green.png"); 
     }
     
     .blue {
-      background-image: url("Images/blue1.png"); 
+      background-image: url("Images/blue.png"); 
     }
     .blue.done:hover {
-      background-image: url("Images/blue1.png"); 
+      background-image: url("Images/blue.png"); 
     }
     
     .yellow {
-      background-image: url("Images/yellow1.png");
+      background-image: url("Images/yellow.png");
     }
     
     .yellow.done:hover {
-      background-image: url("Images/yellow1.png");
+      background-image: url("Images/yellow.png");
     }
     
     .orange {
-      background-image: url("Images/orange1.png");
+      background-image: url("Images/orange.png");
     }
     
     .orange.done:hover {
-      background-image: url("Images/orange1.png"); 
+      background-image: url("Images/orange.png"); 
     }
     
     .purple {
-      background-image: url("Images/purple1.png");
+      background-image: url("Images/purple.png");
     }
     
     .purple.done:hover {
-      background-image: url("Images/purple1.png");
+      background-image: url("Images/purple.png");
     }
     
     .grey {
-      background-image: url("Images/grey1.png");
+      background-image: url("Images/grey.png");
     }
     
     .grey.done:hover {
-      background-image: url("Images/grey1.png");
+      background-image: url("Images/grey.png");
     }
     
     .black {
-      background-image: url("Images/black1.png");
+      background-image: url("Images/black.png");
     }
     
     .black.done:hover {
-      background-image: url("Images/black1.png");
+      background-image: url("Images/black.png");
     }
     
     .card-back {
@@ -130,36 +147,13 @@ template.innerHTML = `
       <button id="startGame">Start Game</button>
     </div>
 
+    <div class="scoreBox">
+      <h4 id="noOfMatches">Matches found: <span id="matchesFound">0 / 8</span></h4>
+      <h4 id="noOfTries">Total tries: <span id="totalTries">0</span></h4>
+    </div>
+
     <div class="box">
       <div class="container">
-
-        <div class="row"> 
-          <div class="card"> </div> 
-          <div class="card"> </div> 
-          <div class="card"> </div> 
-          <div class="card"> </div> 
-        </div>
-
-        <div class="row"> 
-          <div class="card"> </div> 
-          <div class="card"> </div> 
-          <div class="card"> </div> 
-          <div class="card"> </div> 
-        </div>
-
-        <div class="row"> 
-          <div class="card"> </div> 
-          <div class="card"> </div> 
-          <div class="card"> </div> 
-          <div class="card"> </div> 
-        </div>
-
-        <div class="row"> 
-          <div class="card"> </div> 
-          <div class="card"> </div> 
-          <div class="card"> </div> 
-          <div class="card"> </div> 
-        </div>
 
       </div>
     </div>
@@ -170,9 +164,11 @@ class Square extends HTMLElement {
   constructor() {
     super();
 
-    this.clickedCard = null
-    this.preventClick = false,
-      this.combosFound = 0
+    this.clickedCard = null;
+    this.preventClick = false;
+    this.combosFound = 0;
+    this.triesDone = 0;
+    this.numberOfCards = 8;
 
     // Skapa shadowDOM append template ovanför
     this.attachShadow({ mode: 'open' });
@@ -187,9 +183,19 @@ class Square extends HTMLElement {
   }
 
   startGame() {
-    const colors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'grey', 'black']
+    // Hämta square klassen
+    const container = this.shadowRoot.querySelector('.container');
 
-    console.log(colors)
+    let grid = ''
+    let numberOfRows = this.numberOfCards / 2;
+
+    for (let i = 0; i < numberOfRows; i++) {
+      grid += '<div class="row"> <div class="card"> </div> <div class="card"> </div> <div class="card"> </div> <div class="card"> </div> </div>'
+    }
+
+    container.innerHTML = grid;
+
+    const colors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'grey', 'black']
 
     const cardColor = [...this.shadowRoot.querySelectorAll('.card')]
     for (const color of colors) {
@@ -207,10 +213,9 @@ class Square extends HTMLElement {
     }
 
     const cards = this.shadowRoot.querySelectorAll('.card')
-    // console.log(cards)
     for (let i = 0; i < cards.length; i++) {
       cards[i].className += ' card-back'
-      // cards[i].setAttribute('onclick', 'chosenCard(event)')
+      cards[i].addEventListener('click', () => this.chosenCard(cards[i]));
     }
   }
 
@@ -232,8 +237,8 @@ class Square extends HTMLElement {
     } else if (this.clickedCard) {
       if (this.clickedCard.getAttribute('data-color') !== target.getAttribute('data-color')) {
         this.preventClick = true
-        // gameBoard.triesDone++
-        // document.getElementById('tries').innerHTML = `Number of tries: ${gameBoard.triesDone}`
+        this.triesDone++
+        this.shadowRoot.getElementById('totalTries').innerHTML = `${this.triesDone}`
         setTimeout(() => {
           this.clickedCard.className = this.clickedCard.className.replace('done', '').trim() + (' card-back')
           target.className = target.className.replace('done', '').trim() + (' card-back')
@@ -241,14 +246,14 @@ class Square extends HTMLElement {
           this.preventClick = false
         }, 500)
       } else {
-        // gameBoard.triesDone++
+        this.triesDone++
         this.combosFound++
         this.clickedCard = null
 
-        // document.getElementById('match').innerHTML = `Number of matches: ${gameBoard.combosFound} / ${gameBoard.numberOfCards}`
-        // document.getElementById('tries').innerHTML = `Number of tries: ${gameBoard.triesDone}`
+        this.shadowRoot.getElementById('matchesFound').innerHTML = `${this.combosFound} / ${this.numberOfCards}`
+        this.shadowRoot.getElementById('totalTries').innerHTML = `${this.triesDone}`
 
-        if (this.combosFound === 8) {
+        if (this.combosFound === this.numberOfCards) {
           alert('Congrats you found them all')
         }
       }
@@ -259,12 +264,7 @@ class Square extends HTMLElement {
   connectedCallback() {
     this.shadowRoot.querySelector('#exit').addEventListener('click', () => this.exitWindow());
     this.shadowRoot.querySelector('#startGame').addEventListener('click', () => this.startGame());
-
-    const cards = this.shadowRoot.querySelectorAll('.card')
-    for (let i = 0; i < cards.length; i++) {
-      cards[i].addEventListener('click', () => this.chosenCard(cards[i]));
-    }
-  }
+   }
 }
 
 // Kopplar spuare-example custom elementet med Spuare klassen
