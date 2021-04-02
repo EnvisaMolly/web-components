@@ -10,6 +10,7 @@ template.innerHTML = `
       border-radius:5px;
       box-shadow: 5px 5px #88888825;
       text-align: center;
+      background-color: white;
     }
 
     #exit {
@@ -359,10 +360,53 @@ window.customElements.define('square-example', Square);
 // Hämtar button
 const openWindow = document.getElementById('openWindow')
 
+let number = 0;
+
 // Om man klickar på Memoryknappen
-openWindow.onclick = (number) => {
+openWindow.onclick = () => {
   // Skapa nytt element
   const memory = document.createElement('square-example')
+
+  memory.setAttribute('id', `myBox${number}`)
   // Lägg till element i body
   document.body.appendChild(memory)
+
+  makeDraggable()
+  number++
+}
+
+
+function makeDraggable() {
+  console.log('hello')
+  const el = document.getElementById(`myBox${number}`)
+
+  el.style.position ="absolute"
+
+  el.addEventListener("mousedown", mousedown)
+
+  function mousedown(e) {
+      window.addEventListener("mousemove", mousemove)
+      window.addEventListener("mouseup", mouseup)
+
+      let prevX = e.clientX
+      let prevY = e.clientY
+
+      function mousemove(e) {
+              let newX = prevX - e.clientX
+              let newY = prevY - e.clientY
+
+              const rect = el.getBoundingClientRect()
+
+              el.style.left = rect.left - newX + "px"
+              el.style.top = rect.top - newY + "px"
+
+              prevX = e.clientX
+              prevY = e.clientY
+          }
+
+      function mouseup() {
+          window.removeEventListener('mousemove', mousemove)
+          window.removeEventListener('mouseup', mouseup)
+      }
+  }
 }
